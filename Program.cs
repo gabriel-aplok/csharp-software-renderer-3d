@@ -248,7 +248,7 @@ namespace SoftwareRenderer
             {
                 _renderer.ModelMatrix =
                     Matrix4x4.CreateRotationY(-_rotation) * Matrix4x4.CreateTranslation(2f, 0, 0);
-                _renderer.DrawModel(_buffer, _loadedModel, Color.Cyan.ToArgb());
+                _renderer.DrawModel(_buffer, _loadedModel, Color.Red.ToArgb());
             }
 
             // blit to screen using lockbits
