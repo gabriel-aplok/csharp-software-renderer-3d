@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using SoftwareRenderer.ModelParser;
 
 namespace SoftwareRenderer
 {
@@ -25,6 +26,26 @@ namespace SoftwareRenderer
         public Matrix4x4 ModelMatrix;
         public Matrix4x4 ViewMatrix;
         public Matrix4x4 ProjectionMatrix;
+
+        public void DrawModel(SoftBuffer buffer, IOBJHandle model, int color)
+        {
+            if (model.Indices.Length == 0)
+                return;
+
+            Matrix4x4 mvp = ModelMatrix * ViewMatrix * ProjectionMatrix;
+            var vertices = model.Vertices;
+            var indices = model.Indices;
+
+            // the parser triangulated everything, so I can safely step by 3, or no????
+            for (int i = 0; i < indices.Length; i += 3)
+            {
+                Vector3 v0 = vertices[indices[i]].Position;
+                Vector3 v1 = vertices[indices[i + 1]].Position;
+                Vector3 v2 = vertices[indices[i + 2]].Position;
+
+                DrawTriangle(v0, v1, v2, color, mvp, buffer);
+            }
+        }
 
         public void DrawCube(SoftBuffer buffer)
         {
@@ -161,6 +182,8 @@ namespace SoftwareRenderer
         private readonly Bitmap _bitmap;
         private readonly System.Windows.Forms.Timer _timer;
 
+        private readonly IOBJHandle _loadedModel;
+
         public MainForm()
         {
             Text = "Software Renderer, why not?";
@@ -168,9 +191,23 @@ namespace SoftwareRenderer
             Height = 600;
             DoubleBuffered = true;
 
+            string iconPath = Path.Combine(AppContext.BaseDirectory, "icon.ico");
+            if (File.Exists(iconPath))
+                this.Icon = new Icon(iconPath);
+            else
+                Console.WriteLine($"Missing icon: {iconPath}");
+
             _buffer = new SoftBuffer(ClientSize.Width, ClientSize.Height);
             _renderer = new Renderer();
             _bitmap = new Bitmap(_buffer.Width, _buffer.Height, PixelFormat.Format32bppPArgb);
+
+            _loadedModel = OBJFileLoader.CreateHandle();
+
+            string modelPath = Path.Combine(AppContext.BaseDirectory, "res", "suzanne.obj");
+            if (File.Exists(modelPath))
+                OBJFileLoader.Load(_loadedModel, modelPath);
+            else
+                Console.WriteLine($"MissingSoftware Renderer, missing: {modelPath}");
 
             _timer = new System.Windows.Forms.Timer { Interval = 16 }; // ~60 FPS
             _timer.Tick += (s, e) =>
@@ -198,10 +235,21 @@ namespace SoftwareRenderer
                 Vector3.Zero,
                 Vector3.UnitY
             );
-            _renderer.ModelMatrix =
-                Matrix4x4.CreateRotationY(_rotation) * Matrix4x4.CreateRotationX(_rotation * 0.5f);
 
+            // draw the hardcoded cube
+            _renderer.ModelMatrix =
+                Matrix4x4.CreateRotationY(_rotation)
+                * Matrix4x4.CreateRotationX(_rotation * 0.5f)
+                * Matrix4x4.CreateTranslation(-2f, 0, 0);
             _renderer.DrawCube(_buffer);
+
+            // draw the loaded model
+            if (_loadedModel.Indices.Length > 0)
+            {
+                _renderer.ModelMatrix =
+                    Matrix4x4.CreateRotationY(-_rotation) * Matrix4x4.CreateTranslation(2f, 0, 0);
+                _renderer.DrawModel(_buffer, _loadedModel, Color.Cyan.ToArgb());
+            }
 
             // blit to screen using lockbits
             BitmapData data = _bitmap.LockBits(
@@ -213,6 +261,7 @@ namespace SoftwareRenderer
             _bitmap.UnlockBits(data);
 
             e.Graphics.DrawImage(_bitmap, 0, 0);
+            e.Graphics.DrawRectangle(Pens.Red, 0, 0, _buffer.Width - 1, _buffer.Height - 1);
         }
 
         [STAThread]
