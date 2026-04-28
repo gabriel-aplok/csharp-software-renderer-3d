@@ -1,5 +1,6 @@
 ﻿using System.Drawing.Imaging;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SoftwareRenderer.ModelParser;
@@ -191,11 +192,12 @@ namespace SoftwareRenderer
             Height = 600;
             DoubleBuffered = true;
 
-            string iconPath = Path.Combine(AppContext.BaseDirectory, "icon.ico");
-            if (File.Exists(iconPath))
-                this.Icon = new Icon(iconPath);
+            var assembly = Assembly.GetExecutingAssembly();
+            using Stream? stream = assembly.GetManifestResourceStream("SoftwareRenderer.icon.ico");
+            if (stream != null)
+                Icon = new Icon(stream);
             else
-                Console.WriteLine($"Missing icon: {iconPath}");
+                Console.WriteLine($"Missing embedded icon: {stream}");
 
             _buffer = new SoftBuffer(ClientSize.Width, ClientSize.Height);
             _renderer = new Renderer();
