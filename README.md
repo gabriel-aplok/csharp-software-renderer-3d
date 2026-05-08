@@ -1,8 +1,9 @@
 # Software Renderer
 
-A pure C# 3D renderer built from scratch. No OpenGL, no DirectX, or Vulkan. just math and CPU.
-
+A pure C# 3D renderer built from scratch. No OpenGL, no DirectX, Vulkan or anythig else like that. just my big boy CPU.
 It projects 3D vertices onto a 2D grid of integers (your screen) using barycentric coordinate rasterization.
+
+Why? Cuz I want to learn, lol.
 
 ![Screenshot](res/screenshot.png)
 
@@ -38,7 +39,8 @@ The final executable will be located in:
 
 ## Planned
 
-- I want to create a basic .obj reader so I can render a more complex model later.
+- [x] I want to create a basic .obj reader so I can render a more complex model later.
+- [ ] I want to make a basic shadowmapping? idk
 
 ## License
 
